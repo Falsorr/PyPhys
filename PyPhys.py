@@ -1,3 +1,4 @@
+from typing import overload
 import numpy as np
 import itertools
 
@@ -138,11 +139,126 @@ def division(x, xerr, y, yerr, m = 1, n = 1, k = 1) :
     0.5
     >>> Zerr
     0.03535533905932738
+    >>> Z, Zerr = division(2, .1, 4, .2, 3, 4, 5)
+    >>> Z
+    0.15625
+    >>> Zerr
+    0.0390625
     """
     Z = k * (x ** m / y ** n)
     Zerr = Z * np.sqrt((m * xerr / x)**2 + (n * yerr / y)**2)
     return Z, Zerr
 
+def least_squares(x, y) :
+    """(tuple, tuple) -> (float, float, float, float)
+    - x : tuple containing x-coordinates of the data points
+    - y : tuple containing y-coordinates of the data points
+    Find m, c, merr, cerr using the method of least squares, that is the
+    coefficients m and c such that the line mx + c is the best fit for the data points
+    merr is the error on m,
+    cerr is the error on c
+    """
+    N = len(x)
+    sum_x = 0
+    sum_y = 0
+    sum_x2 = 0
+    sum_xy = 0
+    for i in range(N) :
+        sum_x += x[i]
+        sum_y += y[i]
+        sum_x2 += x[i] ** 2
+        sum_xy += x[i] * y[i]
+    delta = N * sum_x2 - sum_x ** 2
+
+    m = (N * sum_xy - (sum_x * sum_y)) / delta
+    c = (sum_x2 * sum_y - sum_x * sum_xy) / delta
+    alpha_CU = 0
+    for i in range(N) :
+        alpha_CU += (y[i] - m * x[i] - c) ** 2
+    alpha_CU /= (N - 2)
+    alpha_CU = np.sqrt(alpha_CU)
+
+    merr = alpha_CU * np.sqrt(N/ delta)
+    cerr = alpha_CU * np.sqrt(sum_x2 / delta)
+
+    return m, merr, c, cerr
+
+def chi_square(observed, expected) :
+    """(tuple, tuple) -> float
+    - observed : the measured value of the y-coordinates of the data points
+    - expected : the expected value of the y-coordinates of the data points from a fit
+    Compute a chi square value for a fit
+    """
+    chi_square = 0
+    for o, e in itertools.zip_longest(observed, expected) :
+        chi_square += (o - e) ** 2 / e
+    return chi_square
+
+def residuals(observed, expected) : 
+    """(tuple, tuple) -> list
+    - observed : the measured value of the y-coordinates of the data points
+    - expected : the expected value of the y-coordinates of the data points from a fit
+    Compute the residuals for a fit
+    """
+    res = []
+    for o,e in itertools.zip_longest(observed, expected) :
+        res.append(e-o)
+    return res
+
+def weighted_least_squares(x, y, yerr) :
+    """(tuple, tuple, tuple) -> (float, float, float, float)
+    - x : the x-coordinates of the data points
+    - y : the y-coordinates of the data points
+    - yerr : the error on the y-coordinate
+    Find the coefficients for a line of best fit (least squares) when uncertainty isn't uniform
+    """
+    w = []
+    for a in yerr :
+        w.append(1/a**2)
+    sum_w = 0
+    sum_wx = 0
+    sum_wy = 0
+    sum_wxy = 0
+    sum_wx2 = 0
+
+    for i in range(len(x)) :
+        sum_w += w[i]
+        sum_wx += w[i] * x[i]
+        sum_wy += w[i] * x[i]
+        sum_wxy += w[i] * x[i] * y[i]
+        sum_wx2 += w[i] * x[i] ** 2 
+    
+    delta = sum_w * sum_wx2 - sum_wx ** 2
+
+    m = (sum_w * sum_wxy - sum_wx * sum_wy) / delta
+    c = (sum_wx2 * sum_wy - sum_wx * sum_wxy) / delta
+    merr = np.sqrt(sum_w / delta)
+    cerr = np.sqrt(sum_wx2 / delta)
+
+    return m, merr, c, cerr
+
 if __name__ == '__main__' :
-    Z, Zerr = division(2, .1, 4, .2, 3, 4, 5)
-    print(Z, Zerr)
+    import matplotlib.pyplot as plt
+    x = (1, 2, 3, 4)
+    xerr = (.1, .1, .1, .1)
+    y = (1, 2, 3, 4)
+    yerr = (.2, .3, .4, .5)
+
+    plt.subplot(2, 1, 1)
+    plt.errorbar(x, y, xerr = xerr, yerr = yerr, fmt='o')
+    m, merr, c, cerr = weighted_least_squares(x, y, yerr)
+    y_best_fit = []
+    for i in x :
+        y_best_fit.append(m * i + c)
+    plt.subplot(2, 1, 1)
+    plt.plot(x, y_best_fit)
+    print(f'm: {m} +/- {merr}')
+    print(f'c: {c} +/- {cerr}')
+    print(chi_square(y, y_best_fit))
+
+    plt.subplot(2, 1, 2)
+    plt.scatter(x, residuals(y, y_best_fit))
+    plt.axhline(0, color = 'r')
+    plt.show()
+    
+    
