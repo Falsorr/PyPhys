@@ -1,3 +1,5 @@
+#Author: Daniel Fassler
+
 from typing import overload
 import numpy as np
 import itertools
