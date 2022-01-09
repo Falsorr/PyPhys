@@ -1,6 +1,5 @@
 #Author: Daniel Fassler
 
-from typing import overload
 import numpy as np
 import itertools
 
@@ -66,10 +65,10 @@ def sine(x, xerr) :
     xerr - uncertainty on x
     Takes sin(x) and propagates uncertainty (in radians)
     >>> Z, Zerr = sine(np.pi, .1)
-    >>> Z 
+    >>> round(Z) 
     0
     >>> Zerr
-    .1
+    0.1
     """
     Z = np.sin(x)
     Zerr = abs(np.cos(x)) * xerr
@@ -81,10 +80,10 @@ def cosine(x, xerr) :
     xerr - uncertainty on x
     Takes cos(x) and propagates uncertainty (in radians)
     >>> Z, Zerr = cosine(np.pi / 2, .1)
-    >>> Z 
+    >>> round(Z) 
     0
     >>> Zerr
-    .1
+    0.1
     """
     Z = np.cos(x)
     Zerr = abs(np.sin(x)) * xerr
@@ -96,10 +95,10 @@ def tangent(x, xerr) :
     xerr - uncertainty on x
     Takes tan(x) and propagates uncertainty (in radians)
     >>> Z, Zerr = tangent(np.pi, .1)
-    >>> Z 
+    >>> round(Z) 
     0
     >>> Zerr
-    .1
+    0.1
     """
     Z = np.tan(x)
     Zerr = (1 + Z ** 2) * xerr
@@ -240,6 +239,10 @@ def weighted_least_squares(x, y, yerr) :
     return m, merr, c, cerr
 
 if __name__ == '__main__' :
+    import doctest
+
+    doctest.testmod()
+
     import matplotlib.pyplot as plt
     x = (1, 2, 3, 4)
     xerr = (.1, .1, .1, .1)
