@@ -9,4 +9,6 @@ All the formulas comes from the textbook Measurements and their Uncertainties by
 
 # Installing PyPhys
 Simply download the PyPhys and run the cmd in the directory of PyPhys and run the command 
+```
 pip install PyPhys
+```
